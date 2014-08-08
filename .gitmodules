@@ -1,3 +1,6 @@
 [submodule "server/skynet"]
 	path = server/skynet
 	url = https://github.com/lcc3536/skynet.git
+[submodule "client/cocos2d-js"]
+	path = client/cocos2d-js
+	url = https://github.com/lcc3536/cocos2d-js.git
