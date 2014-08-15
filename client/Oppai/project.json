@@ -1,0 +1,72 @@
+{
+    "project_type": "javascript",
+
+    "debugMode": 1,
+    "showFPS": false,
+    "frameRate": 60,
+    "id": "gameCanvas",
+    "renderMode": 2,
+    "engineDir": "frameworks/cocos2d-html5",
+
+    "modules": ["menus", "audio", "tilemap", "shape-nodes", "cocostudio"],
+
+    "jsList": [
+        "src/lib/cocos-ex/base/macro.js",
+        "src/lib/cocos-ex/base/boot.js",
+        "src/lib/cocos-ex/base/defines.js",
+        "src/lib/cocos-ex/base/even.js",
+        "src/lib/cocos-ex/base/entity.js",
+        "src/lib/async/async.js",
+        "src/lib/underscore/underscore.js",
+        "src/lib/underscore/underscore-ex.js",
+
+        "src/resource.js",
+
+        "src/ex/load.js",
+        "src/ex/defines.js",
+        "src/ex/animationFrameEventHandle.js",
+
+        "src/physics/defines.js",
+        "src/physics/body.js",
+        "src/physics/parabola.js",
+
+        "src/config/constantConfig.js",
+        "src/config/teamTypeConfig.js",
+        "src/config/buffConfig.js",
+        "src/config/skillConfig.js",
+        "src/config/missileStatusConfig.js",
+        "src/config/statusConfig.js",
+        "src/config/statusToMovementID.js",
+        "src/config/heroConfig.js",
+        "src/config/heroSkillConfig.js",
+        "src/config/soldierConfig.js",
+        "src/config/soldierSkillConfig.js",
+        "src/config/battlefieldConfig.js",
+        "src/config/aiConfig.js",
+        "src/config/passConfig.js",
+
+        "src/sound/sound.js",
+        "src/sound/soundEvent.js",
+
+        "src/ai/teamAI.js",
+
+        "src/battle/hero.js",
+        "src/battle/heroAtk.js",
+        "src/battle/heroSkill.js",
+        "src/battle/soldier.js",
+        "src/battle/soldierAtk.js",
+        "src/battle/soldierSkill.js",
+        "src/battle/team.js",
+        "src/battle/missile.js",
+        "src/battle/joystick.js",
+        "src/battle/guideLine.js",
+        "src/battle/control.js",
+        "src/battle/battlefield.js",
+        "src/battle/bgLayer.js",
+        "src/battle/endLayer.js",
+        "src/battle/battleScene.js",
+
+        "src/main/mainLayer.js",
+        "src/main/mainScene.js"
+    ]
+}
