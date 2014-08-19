@@ -91,7 +91,7 @@ op.pInArmature = function (armature, point) {
     var dict = armature.getBoneDic();
 
     for (var key in dict) {
-        var bodyList = dict[key].getColliderBodyList();
+        var bodyList = dict[key].getColliderBodyList() || [];
         for (var i = 0; i < bodyList.length; ++i) {
             if (op.pInPoly(bodyList[i].getCalculatedVertexList(), point)) {
                 return true;
@@ -110,7 +110,7 @@ op.pToArmatureShorterRange = function (armature, point, range) {
 
     for (var key in dict) {
         bone = dict[key];
-        bodyList = bone.getColliderBodyList();
+        bodyList = bone.getColliderBodyList() || [];
 
         for (var j = 0; j < bodyList.length; ++j) {
             body = bodyList[j];

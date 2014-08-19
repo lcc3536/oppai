@@ -2,6 +2,7 @@ var res = {
     skill_cd_png: "res/skill_cd.png",
     soldier_cd1_png: "res/soldier_cd1.png",
     soldier_cd2_png: "res/soldier_cd2.png",
+    target_png: "res/target.png",
 
     hero_1_hero_1_boom_png: "res/hero_1/hero_1/boom.png",
     hero_1_hero_1_boom_smoke_plist: "res/hero_1/hero_1/boom_smoke.plist",

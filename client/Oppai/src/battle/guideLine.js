@@ -42,7 +42,6 @@ var GuideLine = (function () {
                     }
                 } else {
                     this._points = body_points;
-
                 }
 
                 this._drawGuideLine();
@@ -82,8 +81,8 @@ var GuideLine = (function () {
                 for (var i = 0; i < len; ++i) {
                     this._paintbrush.drawDot(
                         this._points[i],
-                        this._radius || DEFAULT_GUIDE_LINE_RADIUS,
-                        this._color || DEFAULT_GUIDE_LINE_COLOR
+                            this._radius || DEFAULT_GUIDE_LINE_RADIUS,
+                            this._color || DEFAULT_GUIDE_LINE_COLOR
                     );
                 }
             }

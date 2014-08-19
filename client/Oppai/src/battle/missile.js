@@ -4,6 +4,8 @@
 
 
 var Missile = (function () {
+    var DEFAULT_GUIDE_LINE_DT = 0.05;       // 抛物线引导线采集点时间间隔
+
     return cc.Node.extend({
         status: 0,
         battlefield: null,
@@ -100,16 +102,23 @@ var Missile = (function () {
         },
 
         end: function () {
-            this.status = MISSILE_STATUS_CONFIG.END;
+            if (this.status === MISSILE_STATUS_CONFIG.MOVE) {
+                var world = this.battlefield.world;
+                if (this.x < world.x || this.x > world.x + world.width) {
+                    this.cancel();
+                }
 
-            this.missileArmature.getAnimation().play("end");
+                this.status = MISSILE_STATUS_CONFIG.END;
 
-            var drawNode = cc.DrawNode.create();
-            this.addChild(drawNode);
+                this.missileArmature.getAnimation().play("end");
 
-            drawNode.drawCircle(cc.p(0, 0), this.range, 0, 20);
+                var drawNode = cc.DrawNode.create();
+                this.addChild(drawNode);
 
-            heroSkill[this.skill.id].bind(this)();
+                drawNode.drawCircle(cc.p(0, 0), this.range, 0, 20);
+
+                heroSkill[this.skill.id].bind(this)();
+            }
         },
 
         cancel: function () {
@@ -174,6 +183,27 @@ var Missile = (function () {
             }
 
             return cc.pAdd(a, this.deviation);
+        },
+
+        getLocusPoints: function () {
+            var locusPoints = [];
+
+            var body = this.getBody();
+            this.setPosition(body.origin);
+
+            while (true) {
+                body.a = this.getAcceleration();
+                body = op.nextParabolaBody(body, DEFAULT_GUIDE_LINE_DT, this.battlefield.world.y);
+                this.setPosition(body.origin);
+
+                if (this.battlefield.checkMissile(this)) {
+                    break;
+                }
+
+                locusPoints.push(body.origin);
+            }
+
+            return locusPoints;
         },
 
         animationEvent: function (armature, movementType, movementID) {

@@ -31,6 +31,9 @@ var Soldier = (function () {
         bloodHidTime: null,
         greedBlood: null,
         yellowBlood: null,
+        markSprite: null,
+        position: null, //位置
+        targetZ: 0,     //目标Z坐标
         isBegan: false,
 
         ctor: function (args) {
@@ -49,8 +52,12 @@ var Soldier = (function () {
             this.load();
             this.loadSkill();
 
-            this.buffNode = cc.Node.create();
+            this.buffNode = new cc.Node();
             this.addChild(this.buffNode);
+
+            this.markSprite = new cc.Sprite(res.target_png);
+            this.markSprite.visible = false;
+            this.addChild(this.markSprite);
 
             this.soldierArmature = ccs.Armature.create("soldier_" + this.resId);
             this.soldierAnimation = this.soldierArmature.getAnimation();
@@ -77,6 +84,9 @@ var Soldier = (function () {
             this.greedBlood.setPercent(percent);
             this.yellowBlood.setPercent(percent);
 
+            this.position = {x: 0, y: 0, z: 0};
+            this.targetZ = 0;
+
             if (cc.game.config[cc.game.CONFIG_KEY.debugMode] == cc.game.DEBUG_MODE_INFO) {
                 this.drawNode = cc.DrawNode.create();
                 this.addChild(this.drawNode, 10);
@@ -99,7 +109,9 @@ var Soldier = (function () {
             this.unit = null;
             this.isBegan = false;
 
-            this.setPosition(this.team.getSoldierPoint());
+            var point = this.team.getSoldierPoint();
+            this.position.x = point.x;
+            this.position.y = point.y;
             this.y += this.altitude;
             this.battlefield.addChild(this);
 
@@ -141,6 +153,7 @@ var Soldier = (function () {
             this._updateStatus(dt);
             this._updateBuff(dt);
             this._updateBlood(dt);
+            this._updatePosition();
         },
 
         _updateStatus: function (dt) {
@@ -242,7 +255,7 @@ var Soldier = (function () {
                 var dict = this.soldierArmature.getBoneDic();
                 for (var key in dict) {
                     var bone = dict[key];
-                    var bodyList = bone.getColliderBodyList();
+                    var bodyList = bone.getColliderBodyList() || [];
                     for (var i = 0; i < bodyList.length; i++) {
                         var body = bodyList[i];
                         var vertexList = body.getCalculatedVertexList();
@@ -259,7 +272,6 @@ var Soldier = (function () {
 
             if (op.pInArmature(this.soldierArmature, point)) {
                 missile.unit = this;
-                missile.end();
 
                 return true;
             }
@@ -316,14 +328,30 @@ var Soldier = (function () {
 
         move: function (dt) {
             var x = this.speed * dt;
-
             if (this.scaleX < 0) {
-                this.x -= x;
+                this.position.x -= x;
             } else {
-                this.x += x;
+                this.position.x += x;
             }
 
+            if (this.position.z != this.targetZ) {
+                var speedZ = this.position.z > this.targetZ ? -50 : 50;
+                if (Math.abs(speedZ * dt) > Math.abs(this.position.z - this.targetZ)) {
+                    this.position.z = this.targetZ;
+                } else {
+                    this.position.z += speedZ * dt;
+                }
+            }
+            this._updateZOrder();
             this.updateStatus(STATUS_CONFIG.MOVE);
+        },
+
+        _updatePosition: function () {
+            this.setPosition(cc.p(this.position.x, this.position.y + this.position.z * 0.5));
+        },
+
+        _updateZOrder: function () {
+            this.setLocalZOrder(-this.position.z + 100);
         },
 
         attack: function (dt) {
@@ -452,6 +480,10 @@ var Soldier = (function () {
         _showBlood: function () {
             this.blood.visible = true;
             this.bloodHidTime = _.now() + BLOOD_SHOW_TIME;
+        },
+
+        setHitMark: function (mark) {
+            this.markSprite.visible = !!mark;
         },
 
         getDamage: function () {
@@ -590,12 +622,12 @@ var Soldier = (function () {
             switch (evt) {
                 case "attack" :
                     cc.assert(this.atkId != null && soldierAtk[this.atkId] != null,
-                        "soldier atk error, atk id is " + this.atkId);
+                            "soldier atk error, atk id is " + this.atkId);
                     soldierAtk[this.atkId].bind(this)();
                     break;
                 case "skill":
                     cc.assert(this.skillId != null && soldierSkill[this.skillId] != null,
-                        "soldier skill error, skill id is " + this.skillId);
+                            "soldier skill error, skill id is " + this.skillId);
                     soldierSkill[this.skillId].bind(this)();
                     break;
                 default :

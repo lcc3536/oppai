@@ -22,5 +22,8 @@ Oppai/frameworks/runtime-src/proj.android/gen/
 Oppai/frameworks/runtime-src/proj.android/assets/
 Oppai/frameworks/runtime-src/proj.android/local.properties
 
+# Ignore file build by Cococs Code IDE
+Oppai/frameworks/runtime-src/proj.ios_mac/build
+
 Oppai/publish
 Oppai/runtime

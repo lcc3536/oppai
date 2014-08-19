@@ -105,6 +105,7 @@ var Team = (function () {
             this._updateSp(dt);
             this._updateHero(dt);
             this._updateSoldiers(dt);
+            this._updateSoldiersTargetZ(dt);
             this._updateAi(dt);
             this._updateControl(dt);
         },
@@ -181,6 +182,53 @@ var Team = (function () {
             }
 
             this.soldiers.sort(this._sortSoldiers.bind(this));
+        },
+
+        //更新小兵的目标Z坐标
+        _updateSoldiersTargetZ: function () {
+            var len = this.soldiers.length;
+            if (len < 1) {
+                return
+            } else if (len === 1) {
+                this.soldiers.targetZ = 0;
+                return
+            }
+
+            var array = [];
+            array[0] = this.soldiers[0];
+            var intervalBegin = this.soldiers[0].position.x;
+            var sumInInterval = 1;
+            for (var i = 1; i < len; ++i) {
+                var judgeExtrusionWidth = 100;   //判定需要分轴的区间宽度（放全局）
+                if (Math.abs(this.soldiers[i].position.x - intervalBegin) <= judgeExtrusionWidth) {
+                    array.push(this.soldiers[i]);
+                    sumInInterval++
+                }
+                if (Math.abs(this.soldiers[i].position.x - intervalBegin) > judgeExtrusionWidth || i === len - 1) {
+                    if (sumInInterval > 1) {
+                        var widthBattleField = 200;  //战场的最大高度（放全局）
+
+                        array.sort(function (a, b) {
+                            if (a.position.z === b.position.z) {
+                                if (this.type === TEAM_TYPE_CONFIG.OWN) {
+                                    return b.position.x - a.position.x
+                                } else {
+                                    return a.position.x - b.position.x
+                                }
+                            }
+                            return a.position.z - b.position.z
+                        });
+
+                        for (var j = 0; j < sumInInterval; j++) {
+                            array[j].targetZ = -0.5 * widthBattleField + widthBattleField * (j + 1) / (sumInInterval + 1)
+                        }
+                    }
+                    array = [];
+                    array[0] = this.soldiers[i];
+                    intervalBegin = this.soldiers[i].position.x;
+                    sumInInterval = 1
+                }
+            }
         },
 
         _updateAi: function (dt) {

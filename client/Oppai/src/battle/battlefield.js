@@ -131,19 +131,7 @@ var Battlefield = (function () {
                 }
             }
 
-            var point = missile.getPosition();
-
-            if (point.y <= this.world.y) {
-                missile.end();
-                return true;
-            }
-
-            if (!cc.rectContainsPoint(this.world, point)) {
-                missile.cancel();
-                return true;
-            }
-
-            return false;
+            return (!cc.rectContainsPoint(this.world, missile.getPosition()));
         },
 
         addUpdateFunc: function (func) {

@@ -4,7 +4,6 @@
 
 
 var Hero = (function () {
-    var DEFAULT_GUIDE_LINE_DT = 0.05;       // 抛物线引导线采集点时间间隔
     var DEFAULT_DAMAGE_THRESHOLD = 0.05;    // 播放被击临界值
 
     return cc.Node.extend({
@@ -38,6 +37,7 @@ var Hero = (function () {
         greedBlood: null,
         yellowBlood: null,
         guideLine: null,
+        missileTargets: null,
 
         ctor: function (args) {
             this._super();
@@ -50,9 +50,14 @@ var Hero = (function () {
             this.team = args.team;
             this.id = args.id;
             this.atkCount = 0;
+            this.missileTargets = null;
 
             this.load();
             this.loadSkill();
+
+            this.markSprite = new cc.Sprite(res.target_png);
+            this.markSprite.visible = false;
+            this.addChild(this.markSprite);
 
             this.heroArmature = ccs.Armature.create("hero_" + this.resId);
             this.heroAnimation = this.heroArmature.getAnimation();
@@ -203,12 +208,37 @@ var Hero = (function () {
         },
 
         _updateMissiles: function (dt) {
+            var len, i;
+
+            if (this.missileTargets && this.missileTargets.length > 0) {
+                len = this.missileTargets.length;
+
+                for (i = 0; i < len; ++i) {
+                    if (this.missileTargets[i] != STATUS_CONFIG.DIED) {
+                        this.missileTargets[i].setHitMark(false);
+                    }
+                }
+            }
+
+            if (this.status === STATUS_CONFIG.READY && this.missile &&
+                this.missile.status === MISSILE_STATUS_CONFIG.BEGAN) {
+                this.guideLine.drawGuideLine(this.missile.getLocusPoints());
+
+                this.missileTargets = this.missile.getTargets();
+
+                len = this.missileTargets.length;
+
+                for (i = 0; i < len; ++i) {
+                    this.missileTargets[i].setHitMark(true);
+                }
+            }
+
             var battlefield = this.battlefield;
             var missile = null;
 
-            var len = this.missiles.length;
+            len = this.missiles.length;
 
-            for (var i = 0; i < len; ++i) {
+            for (i = 0; i < len; ++i) {
                 missile = this.missiles[i];
 
                 if (battlefield.isEnd) {
@@ -218,6 +248,8 @@ var Hero = (function () {
 
                     if (missile.status === MISSILE_STATUS_CONFIG.MOVE) {
                         if (battlefield.checkMissile(missile)) {
+                            missile.end();
+
                             this.missiles.splice(i, 1);
 
                             i -= 1;
@@ -262,7 +294,7 @@ var Hero = (function () {
                 var dict = this.heroArmature.getBoneDic();
                 for (var key in dict) {
                     var bone = dict[key];
-                    var bodyList = bone.getColliderBodyList();
+                    var bodyList = bone.getColliderBodyList() || [];
                     for (var i = 0; i < bodyList.length; i++) {
                         var body = bodyList[i];
                         var vertexList = body.getCalculatedVertexList();
@@ -279,7 +311,6 @@ var Hero = (function () {
 
             if (op.pInArmature(this.heroArmature, point)) {
                 missile.unit = this;
-                missile.end();
 
                 return true;
             }
@@ -307,7 +338,6 @@ var Hero = (function () {
             this.status = status;
 
             var nowMovementID = STATUS_TO_MOVEMENT_ID[this.status];
-
             if (this.status === STATUS_CONFIG.READY || this.status === STATUS_CONFIG.LAUNCH) {
                 nowMovementID += this._getComponent();
             }
@@ -430,9 +460,9 @@ var Hero = (function () {
                 this.heroArmature.stopAllActions();
 
                 this.heroArmature.runAction(
-                    cc.Sequence.create(
-                        cc.TintTo.create(0.08, 255, 0, 0),
-                        cc.TintTo.create(0.16, 255, 255, 255)
+                    cc.sequence(
+                        cc.tintTo(0.08, 255, 0, 0),
+                        cc.tintTo(0.16, 255, 255, 255)
                     )
                 );
 
@@ -480,9 +510,9 @@ var Hero = (function () {
             label.setFontSize(label.getFontSize() * scale);
 
             bloodLabel.runAction(
-                cc.Sequence.create(
-                    cc.MoveBy.create(1, cc.p(0, 70)),
-                    cc.CallFunc.create(function () {
+                cc.sequence(
+                    cc.moveBy(1, cc.p(0, 70)),
+                    cc.callFunc(function () {
                         bloodLabel.removeFromParent();
                     }, this)
                 )
@@ -492,6 +522,10 @@ var Hero = (function () {
         _showBlood: function () {
             this.blood.visible = true;
             this.bloodHidTime = _.now() + BLOOD_SHOW_TIME;
+        },
+
+        setHitMark: function (mark) {
+            this.markSprite.visible = !!mark;
         },
 
         getDamage: function () {
@@ -620,8 +654,6 @@ var Hero = (function () {
                     this.missile.distance = distance;
                     this.missile.degrees = this.type == TEAM_TYPE_CONFIG.OWN ? degrees : 180 - degrees;
                     this.missile.muzzle = this.getMuzzle();
-
-                    this._drawGuideLine(this.missile);
                 }
             }
         },
@@ -656,23 +688,6 @@ var Hero = (function () {
             this.guideLine.clear();
             this.missile.cancel();
             this.missile = null;
-        },
-
-        _drawGuideLine: function (missile) {
-            var locus = [];
-            var body = missile.getBody();
-
-            while (true) {
-                body = op.nextParabolaBody(body, DEFAULT_GUIDE_LINE_DT);
-
-                if (!cc.rectContainsPoint(this.battlefield.world, body.origin)) {
-                    break;
-                }
-
-                locus.push(body);
-            }
-
-            this.guideLine.drawGuideLine(locus);
         },
 
         getPoint: function () {
@@ -763,11 +778,12 @@ var Hero = (function () {
                         this.missile.muzzle = this.getMuzzle();
                         this.missile.move();
                         this.missiles.push(this.missile);
+                        this.missile = null;
                     }
                     break;
                 case "attack" :
                     cc.assert(this.atkId != null && heroAtk[this.atkId] != null,
-                        "soldier atk error, atk id is " + this.atkId);
+                            "soldier atk error, atk id is " + this.atkId);
                     heroAtk[this.atkId].bind(this)();
                     break;
                 default :
